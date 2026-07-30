@@ -84,6 +84,12 @@
             padding: 15px;
             border: 1px solid #e9ecef;
         }
+        .preview-upah-box {
+            background-color: #e8f5e9;
+            border: 1px dashed #2e7d32;
+            border-radius: 10px;
+            padding: 12px;
+        }
     </style>
 </head>
 <body>
@@ -91,7 +97,7 @@
 <div class="header-bg text-center mb-3">
     <div class="company-badge mb-2">PT. Gula Nusantara Sukses</div>
     <h1 class="h4 mb-1 fw-bold">🌴 Kalkulator Pancang Sawit</h1>
-    <p class="small mb-0 opacity-75">Sistem Perhitungan Luas Hasil Pancang Tanam</p>
+    <p class="small mb-0 opacity-75">Sistem Perhitungan & Bagi Upah Borongan Tim</p>
 </div>
 
 <div class="container" style="max-width: 480px;">
@@ -162,7 +168,7 @@
         </div>
     </div>
 
-    <!-- Output Hasil Perhitungan & Form Simpan -->
+    <!-- Output Hasil Perhitungan & Form Borongan -->
     <div id="hasilContainer" class="card card-custom p-3 mb-3 d-none">
         <div class="result-box text-center mb-3">
             <span class="text-uppercase small fw-bold text-muted d-block">Hasil Total Pengerjaan</span>
@@ -177,31 +183,50 @@
             <ul class="list-unstyled mb-0 small" id="resRincian"></ul>
         </div>
 
-        <!-- FORM SIMPAN KE GOOGLE SHEETS -->
+        <!-- FORM SIMPAN BORONGAN -->
         <div class="form-rekap-bg">
-            <h6 class="fw-bold mb-3 text-success">📝 Simpan Rekap ke Google Sheets</h6>
+            <h6 class="fw-bold mb-3 text-success">👥 Rekap Upah Borongan Tim</h6>
             
-            <div class="mb-2">
-                <label class="form-label small fw-semibold mb-1">Tanggal</label>
-                <input type="date" id="inputTanggal" class="form-control form-control-sm" required>
-            </div>
-            
-            <div class="mb-2">
-                <label class="form-label small fw-semibold mb-1">Nama Anggota / Mandor</label>
-                <input type="text" id="inputNama" class="form-control form-control-sm" placeholder="Contoh: Budi" required>
+            <div class="row">
+                <div class="col-6 mb-2">
+                    <label class="form-label small fw-semibold mb-1">Tanggal</label>
+                    <input type="date" id="inputTanggal" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-6 mb-2">
+                    <label class="form-label small fw-semibold mb-1">Blok Tanam</label>
+                    <input type="text" id="inputBlok" class="form-control form-control-sm" placeholder="Contoh: F9" required>
+                </div>
             </div>
 
             <div class="mb-2">
-                <label class="form-label small fw-semibold mb-1">Blok Tanam</label>
-                <input type="text" id="inputBlok" class="form-control form-control-sm" placeholder="Contoh: HGU A" required>
+                <label class="form-label small fw-semibold mb-1">Tarif Upah Borongan per Ha (Rp)</label>
+                <input type="number" id="inputTarif" class="form-control form-control-sm" value="300000" oninput="hitungPembagianUpah()" required>
             </div>
 
             <div class="mb-3">
-                <label class="form-label small fw-semibold mb-1">Tarif Upah per Hektar (Rp)</label>
-                <input type="number" id="inputTarif" class="form-control form-control-sm" placeholder="Contoh: 150000" required>
+                <label class="form-label small fw-semibold mb-1">Daftar Nama Pekerja (Masuk Hari Ini)</label>
+                <textarea id="inputPekerja" class="form-control form-control-sm" rows="4" placeholder="Ketik nama (1 nama per baris atau pisahkan dengan koma):&#10;Wahyu&#10;Yoga&#10;Wahyuni&#10;Yusman" oninput="hitungPembagianUpah()" required></textarea>
+                <div class="form-text" style="font-size: 0.7rem;">Sistem otomatis membagi hasil ke semua nama di atas.</div>
             </div>
 
-            <button id="btnSimpan" class="btn btn-success w-100 fw-bold" onclick="simpanKeSheets()">Kirim Data & Simpan</button>
+            <!-- PREVIEW HASIL PEMBAGIAN UPAH -->
+            <div class="preview-upah-box mb-3">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span>Total Borongan:</span>
+                    <strong id="prevTotalBorongan">Rp 0</strong>
+                </div>
+                <div class="d-flex justify-content-between small mb-1">
+                    <span>Jumlah Pekerja:</span>
+                    <strong id="prevJumlahPekerja">0 Orang</strong>
+                </div>
+                <hr class="my-1">
+                <div class="d-flex justify-content-between fw-bold text-success">
+                    <span>Upah per Orang:</span>
+                    <span id="prevUpahPerOrang" class="fs-6">Rp 0</span>
+                </div>
+            </div>
+
+            <button id="btnSimpan" class="btn btn-success w-100 fw-bold" onclick="simpanKeSheets()">Simpan Rekap Borongan</button>
         </div>
     </div>
 
@@ -214,11 +239,16 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// Variabel global untuk menampung hasil Ha
 let totalHaGlobal = 0;
+let totalBoronganGlobal = 0;
+let upahPerOrangGlobal = 0;
+let jumlahOrangGlobal = 0;
 
-// URL Apps Script kamu
 const scriptURL = 'https://script.google.com/macros/s/AKfycbyxGVs1bGjcJ0IYORMWsKWgYXmzfJjTCVtoOLUM8PYyy2uJFyDkGVcnUoI79LK1XGiUKg/exec';
+
+function formatRupiah(num) {
+    return 'Rp ' + Math.round(num).toLocaleString('id-ID');
+}
 
 function formatIndo(num, decimal) {
     return num.toLocaleString('id-ID', { minimumFractionDigits: decimal, maximumFractionDigits: decimal });
@@ -266,47 +296,73 @@ function tampilkanHasil(totalHa, rincianHTML) {
     document.getElementById('resRincian').innerHTML = rincianHTML;
     document.getElementById('hasilContainer').classList.remove('d-none');
     
-    // Set tanggal otomatis ke hari ini
     if(!document.getElementById('inputTanggal').value) {
         document.getElementById('inputTanggal').valueAsDate = new Date();
     }
+
+    hitungPembagianUpah();
+}
+
+function hitungPembagianUpah() {
+    const tarif = parseFloat(document.getElementById('inputTarif').value) || 0;
+    const textPekerja = document.getElementById('inputPekerja').value;
+    
+    // Hitung nama yang valid (dipisah enter atau koma)
+    const listPekerja = textPekerja.split(/[\n,]+/).map(n => n.trim()).filter(n => n.length > 0);
+    jumlahOrangGlobal = listPekerja.length;
+
+    totalBoronganGlobal = totalHaGlobal * tarif;
+    upahPerOrangGlobal = jumlahOrangGlobal > 0 ? (totalBoronganGlobal / jumlahOrangGlobal) : 0;
+
+    document.getElementById('prevTotalBorongan').innerText = formatRupiah(totalBoronganGlobal);
+    document.getElementById('prevJumlahPekerja').innerText = jumlahOrangGlobal + ' Orang';
+    document.getElementById('prevUpahPerOrang').innerText = formatRupiah(upahPerOrangGlobal);
 }
 
 function simpanKeSheets() {
     const tanggal = document.getElementById('inputTanggal').value;
-    const nama = document.getElementById('inputNama').value;
     const blok = document.getElementById('inputBlok').value;
     const tarif = parseFloat(document.getElementById('inputTarif').value) || 0;
+    const pekerja = document.getElementById('inputPekerja').value;
 
-    if(!tanggal || !nama || !blok || !tarif) {
-        alert("Mohon lengkapi Tanggal, Nama, Blok, dan Tarif Upah!");
+    if(!tanggal || !blok || !tarif || !pekerja) {
+        alert("Mohon lengkapi Tanggal, Blok, Tarif, dan Daftar Nama Pekerja!");
         return;
     }
 
-    const totalUang = Math.round(totalHaGlobal * tarif);
+    if(jumlahOrangGlobal === 0) {
+        alert("Masukkan minimal 1 nama pekerja!");
+        return;
+    }
+
     const btn = document.getElementById('btnSimpan');
-    btn.innerText = "⏳ Sedang Menyimpan...";
+    btn.innerText = `⏳ Menyimpan ${jumlahOrangGlobal} Data Pekerja...`;
     btn.disabled = true;
 
     const formData = new FormData();
     formData.append('tanggal', tanggal);
-    formData.append('nama', nama);
     formData.append('blok', blok);
     formData.append('hasil_ha', totalHaGlobal.toFixed(4).replace('.', ','));
-    formData.append('total_uang', totalUang);
+    formData.append('tarif_ha', tarif);
+    formData.append('total_borongan', Math.round(totalBoronganGlobal));
+    formData.append('jumlah_orang', jumlahOrangGlobal);
+    formData.append('upah_per_orang', Math.round(upahPerOrangGlobal));
+    formData.append('nama_pekerja', pekerja);
 
     fetch(scriptURL, { method: 'POST', body: formData })
         .then(response => {
-            alert("✅ Data berhasil disimpan ke Google Sheets!");
-            btn.innerText = "Kirim Data & Simpan";
+            alert(`✅ Sukses! Data borongan untuk ${jumlahOrangGlobal} pekerja berhasil disimpan ke Google Sheets.`);
+            btn.innerText = "Simpan Rekap Borongan";
             btn.disabled = false;
-            document.getElementById('inputNama').value = '';
+            document.getElementById('inputPekerja').value = '';
+            hitungPembagianUpah();
         })
         .catch(error => {
-            alert("✅ Data berhasil dikirim!");
-            btn.innerText = "Kirim Data & Simpan";
+            alert(`✅ Sukses menyimpan data borongan tim!`);
+            btn.innerText = "Simpan Rekap Borongan";
             btn.disabled = false;
-            document.getElementById('inputNama').value = '';
+            document.getElementById('inputPekerja').value = '';
+            hitungPembagianUpah();
         });
 }
 </script>
