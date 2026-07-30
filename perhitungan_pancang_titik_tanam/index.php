@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Pancang Sawit - PT. Gula Nusantara Sukses</title>
+    <!-- Bootstrap 5 CSS via CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --sawit-dark: #1b4332;
+            --sawit-green: #2d6a4f;
+            --sawit-light: #e9f5ed;
+        }
+        body {
+            background-color: #f4f7f6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding-bottom: 30px;
+        }
+        .header-bg {
+            background: linear-gradient(135deg, var(--sawit-dark), var(--sawit-green));
+            color: white;
+            padding: 24px 15px 20px 15px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .company-badge {
+            background-color: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            padding: 4px 14px;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .card-custom {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            background: white;
+        }
+        .nav-pills .nav-link {
+            color: var(--sawit-dark);
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 10px;
+        }
+        .nav-pills .nav-link.active {
+            background-color: var(--sawit-green);
+            color: white;
+        }
+        .btn-sawit {
+            background-color: var(--sawit-green);
+            color: white;
+            font-weight: 600;
+            padding: 12px;
+            border-radius: 12px;
+        }
+        .btn-sawit:hover, .btn-sawit:active {
+            background-color: var(--sawit-dark);
+            color: white;
+        }
+        .result-box {
+            background-color: var(--sawit-light);
+            border-left: 5px solid var(--sawit-green);
+            border-radius: 12px;
+            padding: 15px;
+        }
+        .result-number {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--sawit-dark);
+        }
+        .footer-text {
+            font-size: 0.75rem;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header-bg text-center mb-3">
+    <div class="company-badge mb-2">PT. Gula Nusantara Sukses</div>
+    <h1 class="h4 mb-1 fw-bold">🌴 Kalkulator Pancang Sawit</h1>
+    <p class="small mb-0 opacity-75">Sistem Perhitungan Luas Hasil Pancang Tanam</p>
+</div>
+
+<div class="container" style="max-width: 480px;">
+
+    <div class="card card-custom p-3 mb-3">
+        <ul class="nav nav-pills nav-justified mb-3" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pills-seling-tab" data-bs-toggle="pill" data-bs-target="#pills-seling" type="button" onclick="currentMode='seling'">Mode Seling</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-ratarata-tab" data-bs-toggle="pill" data-bs-target="#pills-ratarata" type="button" onclick="currentMode='rata_rata'">Mode Rata-Rata</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="pills-tabContent">
+            
+            <!-- MODE 1: SELING -->
+            <div class="tab-pane fade show active" id="pills-seling" role="tabpanel">
+                <form id="formSeling" onsubmit="hitungseling(event)">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Jumlah Seling / Tali</label>
+                        <input type="number" step="any" id="jumlah_seling" class="form-control form-control-lg" placeholder="Contoh: 20" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-semibold small">Titik / Seling</label>
+                            <input type="number" step="any" id="titik_per_seling" class="form-control" value="16" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-semibold small">Titik / Ha</label>
+                            <input type="number" step="any" id="std_ha_1" class="form-control" value="143" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-sawit w-100 shadow-sm mt-2">Hitung Hektar (Ha)</button>
+                </form>
+            </div>
+
+            <!-- MODE 2: RATA-RATA -->
+            <div class="tab-pane fade" id="pills-ratarata" role="tabpanel">
+                <form id="formRataRata" onsubmit="hitungRataRata(event)">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Titik Ke Samping (Baris)</label>
+                        <input type="number" step="any" id="titik_samping" class="form-control form-control-lg" placeholder="Contoh: 46 atau 16" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-semibold small">Kedalam Awal</label>
+                            <input type="number" step="any" id="kedalam_awal" class="form-control" placeholder="Awal: 3" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-semibold small">Kedalam Akhir</label>
+                            <input type="number" step="any" id="kedalam_akhir" class="form-control" placeholder="Akhir: 4" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Titik / Ha (Standar Tanam)</label>
+                        <input type="number" step="any" id="std_ha_2" class="form-control" value="143" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-sawit w-100 shadow-sm mt-2">Hitung Hektar (Ha)</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Output Hasil Perhitungan -->
+    <div id="hasilContainer" class="card card-custom p-3 mb-3 d-none">
+        <div class="result-box text-center mb-3">
+            <span class="text-uppercase small fw-bold text-muted d-block">Hasil Total Pengerjaan</span>
+            <div class="result-number">
+                <span id="resTotalHa">0</span> <span class="fs-4 fw-normal">Ha</span>
+            </div>
+            <small class="text-muted">(Presisi: <span id="resPresisi">0</span> Ha)</small>
+        </div>
+
+        <div class="border-top pt-2">
+            <h6 class="fw-bold mb-2 text-secondary small text-uppercase">Rincian Perhitungan:</h6>
+            <ul class="list-unstyled mb-0 small" id="resRincian"></ul>
+        </div>
+    </div>
+
+    <div class="text-center footer-text mt-3">
+        &copy; PT. Gula Nusantara Sukses<br>
+        Divisi Perkebunan Kelapa Sawit
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function formatIndo(num, decimal) {
+    return num.toLocaleString('id-ID', { minimumFractionDigits: decimal, maximumFractionDigits: decimal });
+}
+
+function hitungseling(e) {
+    e.preventDefault();
+    const jumlahSeling = parseFloat(document.getElementById('jumlah_seling').value) || 0;
+    const titikPerSeling = parseFloat(document.getElementById('titik_per_seling').value) || 16;
+    const stdHa = parseFloat(document.getElementById('std_ha_1').value) || 143;
+
+    const totalTitik = jumlahSeling * titikPerSeling;
+    const totalHa = totalTitik / stdHa;
+
+    document.getElementById('resTotalHa').innerText = formatIndo(totalHa, 2);
+    document.getElementById('resPresisi').innerText = formatIndo(totalHa, 4);
+
+    document.getElementById('resRincian').innerHTML = `
+        <li class="d-flex justify-content-between py-1 border-bottom"><span>Jumlah Seling:</span> <strong>${jumlahSeling} seling</strong></li>
+        <li class="d-flex justify-content-between py-1 border-bottom"><span>Titik per Seling:</span> <strong>${titikPerSeling} titik</strong></li>
+        <li class="d-flex justify-content-between py-1 border-bottom"><span>Total Titik Tanam:</span> <strong>${totalTitik} titik</strong></li>
+        <li class="d-flex justify-content-between py-1"><span>Pembagi Standar:</span> <strong>${stdHa} titik/Ha</strong></li>
+    `;
+    document.getElementById('hasilContainer').classList.remove('d-none');
+}
+
+function hitungRataRata(e) {
+    e.preventDefault();
+    const titikSamping = parseFloat(document.getElementById('titik_samping').value) || 0;
+    const kedalamAwal = parseFloat(document.getElementById('kedalam_awal').value) || 0;
+    const kedalamAkhir = parseFloat(document.getElementById('kedalam_akhir').value) || 0;
+    const stdHa = parseFloat(document.getElementById('std_ha_2').value) || 143;
+
+    const avgKedalam = (kedalamAwal + kedalamAkhir) / 2;
+    const totalTitik = titikSamping * avgKedalam;
+    const totalHa = totalTitik / stdHa;
+
+    document.getElementById('resTotalHa').innerText = formatIndo(totalHa, 2);
+    document.getElementById('resPresisi').innerText = formatIndo(totalHa, 4);
+
+    document.getElementById('resRincian').innerHTML = `
+        <li class="d-flex justify-content-between py-1 border-bottom"><span>Titik Samping:</span> <strong>${titikSamping} titik</strong></li>
+        <li class="d-flex justify-content-between py-1 border-bottom"><span>Rata-Rata Kedalam:</span> <strong>(${kedalamAwal} + ${kedalamAkhir}) / 2 = ${avgKedalam} titik</strong></li>
+        <li class="d-flex justify-content-between py-1 border-bottom"><span>Total Titik Tanam:</span> <strong>${totalTitik} titik</strong></li>
+        <li class="d-flex justify-content-between py-1"><span>Pembagi Standar:</span> <strong>${stdHa} titik/Ha</strong></li>
+    `;
+    document.getElementById('hasilContainer').classList.remove('d-none');
+}
+</script>
+</body>
+</html>
