@@ -81,6 +81,12 @@
             border-radius: 10px;
             padding: 12px;
         }
+        .text-indicator {
+            font-size: 0.75rem;
+            margin-top: 4px;
+            display: block;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -196,11 +202,14 @@
             <div class="row">
                 <div class="col-6 mb-2">
                     <label class="form-label small fw-semibold mb-1">Nama Blok</label>
-                    <input type="text" id="inputBlok" class="form-control form-control-sm" placeholder="Contoh: F8" required>
+                    <!-- Input Nama Blok + AutoComplete Datalist -->
+                    <input type="text" id="inputBlok" list="listBlok" class="form-control form-control-sm" placeholder="Contoh: F8" autocomplete="off" oninput="autoFillHa()" required>
+                    <datalist id="listBlok"></datalist>
                 </div>
                 <div class="col-6 mb-2">
                     <label class="form-label small fw-semibold mb-1">Luas Blok (Ha)</label>
                     <input type="number" step="any" id="inputTotalHaBlok" class="form-control form-control-sm" placeholder="Contoh: 30" required>
+                    <span id="infoAutoFill" class="text-indicator"></span>
                 </div>
             </div>
             <div class="mb-2">
@@ -226,6 +235,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 let totalHaGlobal = 0, totalBoronganGlobal = 0, upahPerOrangGlobal = 0, jumlahOrangGlobal = 0;
+let globalRekapData = []; // Menyimpan data rekap dari server
 const scriptURL = 'https://script.google.com/macros/s/AKfycbzcGId_psZtSlo_2gOG8_ZidC9O5X7UKwpFq2LhkzkKVPhJZsaIWdESdhH-t9qMd9TIDQ/exec';
 
 function formatRupiah(num) { return 'Rp ' + Math.round(num).toLocaleString('id-ID'); }
@@ -240,12 +250,22 @@ function loadRekapBlok() {
     fetch(scriptURL)
         .then(res => res.json())
         .then(data => {
+            globalRekapData = data || []; // Simpan ke variabel global
+            
+            const datalist = document.getElementById('listBlok');
+            datalist.innerHTML = '';
+
             if(!data || data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Belum ada data di Sheet REKAP BLOK</td></tr>';
                 return;
             }
             let html = '';
             data.forEach(item => {
+                // Populate Autocomplete
+                const option = document.createElement('option');
+                option.value = item.blok;
+                datalist.appendChild(option);
+
                 html += `<tr>
                     <td class="fw-bold">${item.blok}</td>
                     <td>${item.total_ha} Ha</td>
@@ -259,6 +279,29 @@ function loadRekapBlok() {
         .catch(() => {
             tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Gagal memuat data rekap</td></tr>';
         });
+}
+
+function autoFillHa() {
+    const inputVal = document.getElementById('inputBlok').value.trim().toUpperCase();
+    const inputTotalHa = document.getElementById('inputTotalHaBlok');
+    const info = document.getElementById('infoAutoFill');
+
+    if (!inputVal) {
+        info.innerText = '';
+        return;
+    }
+
+    // Cari blok di dalam data rekap yang dimuat
+    const match = globalRekapData.find(item => item.blok.toString().toUpperCase().trim() === inputVal);
+
+    if (match) {
+        inputTotalHa.value = match.total_ha;
+        info.innerText = '✨ Terisi otomatis dari database';
+        info.className = 'text-indicator text-success';
+    } else {
+        info.innerText = '🆕 Blok baru';
+        info.className = 'text-indicator text-warning';
+    }
 }
 
 function hitungseling(e) {
@@ -334,6 +377,7 @@ function simpanKeSheets() {
             btn.innerText = "Simpan Rekap Borongan";
             btn.disabled = false;
             document.getElementById('inputPekerja').value = '';
+            document.getElementById('infoAutoFill').innerText = '';
             hitungPembagianUpah();
             loadRekapBlok();
         })
@@ -342,6 +386,7 @@ function simpanKeSheets() {
             btn.innerText = "Simpan Rekap Borongan";
             btn.disabled = false;
             document.getElementById('inputPekerja').value = '';
+            document.getElementById('infoAutoFill').innerText = '';
             hitungPembagianUpah();
             loadRekapBlok();
         });
