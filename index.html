@@ -285,7 +285,6 @@ function loadRekapBlok() {
     fetch(scriptURL)
         .then(res => res.json())
         .then(resData => {
-            // Kompatibilitas jika respons bertipe array atau objek
             const dataBlok = Array.isArray(resData) ? resData : (resData.rekap_blok || []);
             const dataPekerja = resData.rekap_pekerja || [];
 
